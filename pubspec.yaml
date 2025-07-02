@@ -1,0 +1,27 @@
+name: probook
+description: Aplicación multi-herramientas en Flutter
+
+environment:
+  sdk: ">=2.18.0 <3.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  http: ^0.13.4
+  audioplayers: ^5.1.0
+  url_launcher: ^6.1.5
+  cached_network_image: ^3.3.0
+
+dev_dependencies:
+    flutter_launcher_icons: "^0.13.1"
+
+
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/yo.jpeg
+    - assets/toolbox.jpg
+    - assets/joven.jpg
+    - assets/adulto.jpg
+    - assets/anciano.jpg
