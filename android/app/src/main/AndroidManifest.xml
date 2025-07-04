@@ -21,8 +21,8 @@
     </queries>
 
     <application
-        android:label="toolboxapp"
-        android:icon="@mipmap/ic_launcher">
+        android:label="Herramientas"
+        android:icon="@mipmap/launcher_icon">
 
 
         <activity

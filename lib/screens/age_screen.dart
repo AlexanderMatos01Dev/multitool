@@ -9,12 +9,36 @@ class AgeScreen extends StatefulWidget {
   State<AgeScreen> createState() => _AgeScreenState();
 }
 
-class _AgeScreenState extends State<AgeScreen> {
+class _AgeScreenState extends State<AgeScreen> with TickerProviderStateMixin {
   final TextEditingController _controller = TextEditingController();
   int? _age;
   bool _isLoading = false;
   String? _error;
   String? _imageAsset;
+  AnimationController? _animationController;
+  Animation<double>? _slideAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 1000),
+      vsync: this,
+    );
+    _slideAnimation = Tween<double>(
+      begin: 50.0,
+      end: 0.0,
+    ).animate(CurvedAnimation(
+      parent: _animationController!,
+      curve: Curves.bounceOut,
+    ));
+  }
+
+  @override
+  void dispose() {
+    _animationController?.dispose();
+    super.dispose();
+  }
 
   Future<void> _getAge() async {
     final name = _controller.text.trim();
@@ -46,15 +70,16 @@ class _AgeScreenState extends State<AgeScreen> {
 
         setState(() {
           _age = age;
-          // Asignar imagen según la categoría de edad con límites corregidos
+          // Asignar imagen según la categoría de edad
           if (age < 18) {
-            _imageAsset = 'assets/joven.jpg'; // Joven
+            _imageAsset = 'assets/joven.jpg';
           } else if (age < 60) {
-            _imageAsset = 'assets/adulto.jpg'; // Adulto
+            _imageAsset = 'assets/adulto.jpg';
           } else {
-            _imageAsset = 'assets/anciano.jpg'; // Anciano
+            _imageAsset = 'assets/anciano.jpg';
           }
         });
+        _animationController?.forward();
       } else {
         setState(() => _error = 'Error: ${response.statusCode}');
       }
@@ -72,90 +97,289 @@ class _AgeScreenState extends State<AgeScreen> {
       _error = null;
       _imageAsset = null;
     });
+    _animationController?.reset();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Predicción de Edad'),
-        actions: [
-          if (_age != null || _error != null)
-            IconButton(
-              icon: const Icon(Icons.refresh),
-              onPressed: _reset,
-            )
-        ],
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          children: [
-            // Campo de entrada
-            TextField(
-              controller: _controller,
-              decoration: InputDecoration(
-                labelText: 'Nombre',
-                border: const OutlineInputBorder(),
-                prefixIcon: const Icon(Icons.person),
-                suffixIcon: _controller.text.isNotEmpty
-                    ? IconButton(
-                  icon: const Icon(Icons.clear),
-                  onPressed: _reset,
-                )
-                    : null,
-              ),
-              onSubmitted: (_) => _getAge(),
-            ),
-            const SizedBox(height: 20),
-
-            // Botón
-            ElevatedButton(
-              onPressed: _isLoading ? null : _getAge,
-              style: ElevatedButton.styleFrom(
-                minimumSize: const Size(double.infinity, 50),
-              ),
-              child: _isLoading
-                  ? const CircularProgressIndicator()
-                  : const Text('Predecir Edad'),
-            ),
-
-            // Mensaje de error
-            if (_error != null)
-              Padding(
-                padding: const EdgeInsets.only(top: 20),
-                child: Text(
-                  _error!,
-                  style: const TextStyle(color: Colors.red, fontSize: 16),
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Color(0xFF11998e),
+              Color(0xFF38ef7d),
+            ],
+          ),
+        ),
+        child: SafeArea(
+          child: Column(
+            children: [
+              // AppBar personalizada
+              Container(
+                padding: const EdgeInsets.all(20),
+                child: Row(
+                  children: [
+                    IconButton(
+                      onPressed: () => Navigator.pop(context),
+                      icon: const Icon(Icons.arrow_back, color: Colors.white),
+                      style: IconButton.styleFrom(
+                        backgroundColor: Colors.white.withOpacity(0.2),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    const Expanded(
+                      child: Text(
+                        'Predicción de Edad',
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                    if (_age != null || _error != null)
+                      IconButton(
+                        onPressed: _reset,
+                        icon: const Icon(Icons.refresh, color: Colors.white),
+                        style: IconButton.styleFrom(
+                          backgroundColor: Colors.white.withOpacity(0.2),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
               ),
 
-            // Resultado
-            if (_age != null)
-              Padding(
-                padding: const EdgeInsets.only(top: 30),
+              // Contenido principal
+              Expanded(
+                child: Container(
+                  margin: const EdgeInsets.only(top: 20),
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(30),
+                      topRight: Radius.circular(30),
+                    ),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      children: [
+                        // Icono decorativo
+                        Container(
+                          width: 60,
+                          height: 60,
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [Color(0xFF11998e), Color(0xFF38ef7d)],
+                            ),
+                            borderRadius: BorderRadius.circular(15),
+                          ),
+                          child: const Icon(
+                            Icons.cake,
+                            color: Colors.white,
+                            size: 30,
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+
+                        // Campo de entrada
+                        Container(
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(16),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.grey.withOpacity(0.1),
+                                blurRadius: 10,
+                                offset: const Offset(0, 5),
+                              ),
+                            ],
+                          ),
+                          child: TextField(
+                            controller: _controller,
+                            decoration: InputDecoration(
+                              labelText: 'Nombre',
+                              hintText: 'Ingresa un nombre...',
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(16),
+                                borderSide: BorderSide.none,
+                              ),
+                              filled: true,
+                              fillColor: Colors.grey.shade50,
+                              prefixIcon: Container(
+                                margin: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  gradient: const LinearGradient(
+                                    colors: [Color(0xFF11998e), Color(0xFF38ef7d)],
+                                  ),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: const Icon(Icons.person, color: Colors.white),
+                              ),
+                              suffixIcon: _controller.text.isNotEmpty
+                                  ? IconButton(
+                                      icon: const Icon(Icons.clear),
+                                      onPressed: _reset,
+                                    )
+                                  : null,
+                            ),
+                            onSubmitted: (_) => _getAge(),
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+
+                        // Botón de predicción
+                        Container(
+                          width: double.infinity,
+                          height: 56,
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [Color(0xFF11998e), Color(0xFF38ef7d)],
+                            ),
+                            borderRadius: BorderRadius.circular(16),
+                            boxShadow: [
+                              BoxShadow(
+                                color: const Color(0xFF11998e).withOpacity(0.3),
+                                blurRadius: 10,
+                                offset: const Offset(0, 5),
+                              ),
+                            ],
+                          ),
+                          child: ElevatedButton(
+                            onPressed: _isLoading ? null : _getAge,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.transparent,
+                              shadowColor: Colors.transparent,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                            ),
+                            child: _isLoading
+                                ? const CircularProgressIndicator(color: Colors.white)
+                                : const Text(
+                                    'Predecir Edad',
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                          ),
+                        ),
+
+                        const SizedBox(height: 32),
+
+                        // Resultado
+                        Expanded(
+                          child: _buildResult(),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildResult() {
+    if (_error != null) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Colors.red.shade50,
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Icon(
+                Icons.error_outline,
+                size: 60,
+                color: Colors.red.shade400,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              _error!,
+              style: TextStyle(
+                color: Colors.red.shade600,
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (_age != null) {
+      return AnimatedBuilder(
+        animation: _slideAnimation!,
+        builder: (context, child) {
+          return Transform.translate(
+            offset: Offset(0, _slideAnimation!.value),
+            child: Center(
+              child: Container(
+                padding: const EdgeInsets.all(32),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      _getAgeColor().withOpacity(0.1),
+                      _getAgeColor().withOpacity(0.05),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(30),
+                  border: Border.all(color: _getAgeColor().withOpacity(0.3), width: 2),
+                ),
                 child: Column(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    // Imagen según categoría con mejor ajuste
+                    // Imagen con efectos
                     Container(
-                      width: 180,
-                      height: 180,
+                      width: 140,
+                      height: 140,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: _getAgeColor().withOpacity(0.1),
-                        border: Border.all(
-                          color: _getAgeColor(),
-                          width: 3,
-                        ),
-                        image: _imageAsset != null
-                            ? DecorationImage(
-                          image: AssetImage(_imageAsset!),
-                          fit: BoxFit.cover,
-                        )
-                            : null,
+                        border: Border.all(color: _getAgeColor(), width: 4),
+                        boxShadow: [
+                          BoxShadow(
+                            color: _getAgeColor().withOpacity(0.3),
+                            blurRadius: 20,
+                            spreadRadius: 5,
+                          ),
+                        ],
+                      ),
+                      child: ClipOval(
+                        child: _imageAsset != null
+                            ? Image.asset(
+                                _imageAsset!,
+                                fit: BoxFit.cover,
+                              )
+                            : Container(
+                                color: _getAgeColor().withOpacity(0.1),
+                                child: Icon(
+                                  Icons.person,
+                                  size: 60,
+                                  color: _getAgeColor(),
+                                ),
+                              ),
                       ),
                     ),
-                    const SizedBox(height: 25),
+                    const SizedBox(height: 24),
 
                     // Edad
                     Text(
@@ -166,27 +390,61 @@ class _AgeScreenState extends State<AgeScreen> {
                         color: _getAgeColor(),
                       ),
                     ),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 12),
 
-                    // Categoría con texto en mayúscula inicial
-                    Text(
-                      _getAgeCategory(),
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: _getAgeColor(),
+                    // Categoría
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [_getAgeColor(), _getAgeColor().withOpacity(0.8)],
+                        ),
+                        borderRadius: BorderRadius.circular(25),
+                      ),
+                      child: Text(
+                        _getAgeCategory(),
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
                       ),
                     ),
                   ],
                 ),
-              )
-            else if (!_isLoading && _error == null)
-              const Padding(
-                padding: EdgeInsets.only(top: 50),
-                child: Icon(Icons.person_search, size: 100, color: Colors.grey),
               ),
-          ],
-        ),
+            ),
+          );
+        },
+      );
+    }
+
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(30),
+            decoration: BoxDecoration(
+              color: Colors.grey.shade100,
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              Icons.person_search,
+              size: 80,
+              color: Colors.grey.shade400,
+            ),
+          ),
+          const SizedBox(height: 20),
+          Text(
+            'Ingresa un nombre para predecir la edad',
+            style: TextStyle(
+              fontSize: 16,
+              color: Colors.grey.shade600,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
       ),
     );
   }
@@ -199,9 +457,10 @@ class _AgeScreenState extends State<AgeScreen> {
   }
 
   Color _getAgeColor() {
-    if (_age == null) return Colors.blue;
+    if (_age == null) return const Color(0xFF11998e);
     if (_age! < 18) return Colors.green;
     if (_age! < 60) return Colors.blue;
     return Colors.orange;
   }
 }
+
